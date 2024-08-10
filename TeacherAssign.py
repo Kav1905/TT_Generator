@@ -41,7 +41,7 @@ def check(sec):
             if d[i]==3:
                 temp.remove(i)
     return sec
-abcd
+
 import random
 sections9=6
 sections10=6
