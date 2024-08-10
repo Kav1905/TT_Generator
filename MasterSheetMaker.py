@@ -128,22 +128,10 @@ def create_MasterSheet():
             i += 1
     load_sheet.save("Data.xlsx")
 
-def get_pri_teacher_codes():
-    return t_pri
-
-def get_mid_teacher_codes():
-    return t_mid
-
-def get_sec_teacher_codes():
-    return t_sec
-
 def getSubDict():
     revSubDict = {}
     for key, value in Sub_dict.items():
         revSubDict[value] = key
     return revSubDict
-
-def getWingDict():
-    return Wing_dict
 
 create_MasterSheet()

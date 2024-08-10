@@ -94,7 +94,7 @@ def assign(wing):
         for j in t_list:
             d[j] = 0
         for j in range(noOfSections):
-            c = assignOne(wing_sub)
+            c = assignOne(teacher_sub(temp))
             for k in t_list:
                 d[k] = d[k] + c.count(k)
             temp = check(temp, d, wing_sub)
