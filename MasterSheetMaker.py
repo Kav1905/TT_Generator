@@ -1,6 +1,6 @@
 from openpyxl import Workbook, load_workbook
 
-load_sheet = load_workbook("Data.xlsx")
+load_sheet = load_workbook("Data.xlsx", data_only=True)
 Teacher_Input = load_sheet["Teacher_Input"]
 Subject_Input = load_sheet["Subject_Input"]
 Master = load_sheet["Master"]
@@ -127,11 +127,13 @@ def create_MasterSheet():
             
             i += 1
     load_sheet.save("Data.xlsx")
+    load_sheet.close()
 
 def getSubDict():
     revSubDict = {}
     for key, value in Sub_dict.items():
-        revSubDict[value] = key
+        revSubDict[int(value)] = key
     return revSubDict
 
 create_MasterSheet()
+load_sheet.close()
