@@ -3,7 +3,6 @@ from Constraints import lecPerWeek, lecPerDay
 from MasterSheetMaker import getSubDict
 from MasterSheetMaker import t_pri, t_mid, t_sec
 import copy
-import os
 from prettytable import PrettyTable
 
 t_pri = sorted(t_pri)
@@ -167,8 +166,7 @@ def assign_lec(classes, wing, wing_perWeek, wing_perDay, t_list, day, mathcount,
             try:
                 subjects.remove(10)
             except:
-                print("An Unexpected Error has occured, Please restart the program")
-                os.exit()
+                raise ValueError("Unexpected Error")
             if mathcount[i][j] == 1:
                 subjects.remove(1)
             for k in subjects[::-1]:
@@ -246,10 +244,14 @@ def weektime(wing):
                 # print("DAY", i+1)
                 dailyTime(classes, wing, week, wing_perWeek, i, mathcount, t_timetable)
             break
-        except:
-            wing_perWeek = perCounter(wing, wing_sub)
-            week = []
-            bla += 1
+        except Exception as e:
+            if str(e) == "Unexpected Error":
+                print("An Unexpected Error has occured, Please restart the program")
+                exit(0)
+            else:
+                wing_perWeek = perCounter(wing, wing_sub)
+                week = []
+                bla += 1
     print("Timetable has been generated")
     return week, t_timetable
 table = {}
