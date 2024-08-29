@@ -3,6 +3,8 @@ from Constraints import lecPerWeek, lecPerDay
 from MasterSheetMaker import getSubDict
 from MasterSheetMaker import t_pri, t_mid, t_sec
 import copy
+import os
+from prettytable import PrettyTable
 
 t_pri = sorted(t_pri)
 t_mid = sorted(t_mid)
@@ -35,19 +37,12 @@ def getListFromWing(wing):
 
     return t_list, wing_sub
 
-# def getWingCounters(wing):
+def getSubList(t_list):
+    sublist = []
+    for i in t_list:
+        sublist.append(int(i[:2]))
     
-#     if wing == '00':
-#         wing_perDay = pri_perDay
-#         wing_perWeek = pri_perWeek
-#     elif wing == '01':
-#         wing_perDay = mid_perDay
-#         wing_perWeek = mid_perWeek
-#     elif wing == '02':
-#         wing_perDay = sec_perDay
-#         wing_perWeek = sec_perWeek
-
-#     return wing_perDay, wing_perWeek
+    return sublist
 
 def perClassCounter(wing_sub):
     perCount = {}
@@ -64,12 +59,31 @@ def perCounter(wing, wing_sub):
             perCount[i].append(perClassCounter(wing_sub))
     return perCount
 
+def teacherCounter(t_list):
+    t_counter = {}
+    for i in t_list:
+        t_counter[i] = 0
+    
+    return t_counter
+
+def teachertimetable(t_list):
+    t_lectures = {}
+    for i in t_list:
+        t_lectures[i] = []
+        for j in range(noOfDays):
+            t_lectures[i].append([])
+
+    return t_lectures
+
+def get_class(i, j):
+    return str(9+i) + chr(65 + j)
+
 def teacher_sub(t_list):
     a = 1
     d = {}
     l = []
     subCodes = []
-    count = 0
+
     for i in t_list:
         subCodes.append(int(i[:2]))
 
@@ -85,14 +99,6 @@ def teacher_sub(t_list):
 pri_sub = teacher_sub(t_pri)
 mid_sub = teacher_sub(t_mid)
 sec_sub = teacher_sub(t_sec)
-
-# pri_perDay = perCounter(pri_sub)
-# mid_perDay = perCounter(mid_sub)
-# sec_perDay = perCounter(sec_sub)
-
-# pri_perWeek = perCounter(pri_sub)
-# mid_perWeek = perCounter(mid_sub)
-# sec_perWeek = perCounter(sec_sub)
 
 def assignOne(wing_sub):
     c=[]
@@ -140,86 +146,121 @@ def assign(wing):
             classes[i].append(c)
     return classes
 
-def active_lec(classes, wing, wing_perWeek):
-    t_list, wing_sub = getListFromWing(wing)
-    wing_perDay = perCounter(wing, wing_sub)
-    subtemp2 = copy.deepcopy(wing_sub)
+def assign_lec(classes, wing, wing_perWeek, wing_perDay, t_list, day, mathcount, t_timetable):
+    
+    t_counter = teacherCounter(t_list)
     temp = list(t_list)
-    print(wing_perWeek)
-    print("LECTURE")
-    lec = []
-    for i in range(len(classes)):
-        lec.append([])
-        for j in range(noOfSections):
-            lec[i].append([])
-
+    assigned_day = []
+    wed_check = 0
+    if day == 2:
+        wed_check = 2
     for i in range(len(classes)):
         for j in range(noOfSections):
             temp2 = list(classes[i][j])
             counter_perWeek = wing_perWeek[i][j]
             counter_perDay = wing_perDay[i][j]
-            for k in temp2[::-1]:
-                if k not in temp:
-                    # print(temp2)
-                    # print(k)
-                    temp2.remove(k)
-                
-                elif counter_perWeek[int(k[:2])] >= lecPerWeek[int(k[:2])][int(wing)]:
-                    # print(counter_perWeek)
-                    # print(k)
-                    temp2.remove(k)
-                
-                elif counter_perDay[int(k[:2])] >= lecPerDay[int(k[:2])][int(wing)]:
-                    # print(counter_perDay)
-                    # print(k)
-                    temp2.remove(k)
-            
-            # print(subtemp2)
-            # print(temp2)
+            temp2 = list(set(temp) & set(temp2))
+            subjects = getSubList(temp2)
+            assigned = []
+            assigned.extend([1,9,10])
+            subjects.remove(9)
+            try:
+                subjects.remove(10)
+            except:
+                print("An Unexpected Error has occured, Please restart the program")
+                os.exit()
+            if mathcount[i][j] == 1:
+                subjects.remove(1)
+            for k in subjects[::-1]:
+                if counter_perWeek[k] >= lecPerWeek[k][int(wing)]:
+                    subjects.remove(k)
+                elif counter_perDay[k] >= lecPerDay[k][int(wing)]:
+                    subjects.remove(k)
+            # print(subjects)
+            assigned.extend(random.sample(subjects, noOfLec - len(assigned) - wed_check))
+            # print(assigned)
+            assigned_teachers = []
+            for a in temp2[::-1]:
+                if int(a[:2]) in assigned:
+                    t_counter[a] += 1
+                    t_timetable[a][day].append(get_class(i, j))
+                    for n in range(assigned.count(int(a[:2]))):
+                        assigned_teachers.append(a)
+                    if assigned.count(int(a[:2])) == 2:
+                        mathcount[i][j] += 1
+                    wing_perWeek[i][j][int(a[:2])] += assigned.count(int(a[:2]))
+                    if t_counter[a] >= 6:
+                        temp.remove(a)
+            assigned_day.append(assigned_teachers)
+    # print(assigned_day)
+    loop_count = 0
+    while True:
+        try:
+            final = []
+            for i in range(len(classes*noOfSections)):
+                final.append([])
+                if day == 2:
+                    final[i].extend(["Worksheet", "Worksheet"])
+            new_assigned = copy.deepcopy(assigned_day)
+            for i in range(noOfLec - wed_check):
+                used = []
+                for j in range(len(new_assigned)):
+                    # print(final)
+                    possible = list(new_assigned[j])
+                    for k in possible[::-1]:
+                        if k in used:
+                            possible.remove(k)
+                    x = random.choice(possible)
+                    new_assigned[j].remove(x)
+                    final[j].append(subDict[int(x[:2])])
+                    used.append(x)
+            break
+        except:
+            loop_count += 1
+            if loop_count > 5000:
+                raise ValueError("Restart")
+    return final
 
-            subtemp = list(teacher_sub(temp2).keys())
-            x = random.choice(subtemp)
-
-            for a in temp2:
-                if int(a[:2]) == x:
-                    y = a
-                    break
-
-            # print(subtemp2)
-            # print(x,y, end = '\n')
-            wing_perDay[i][j][x] += 1
-            wing_perWeek[i][j][x] += 1
-            subtemp2[x].remove(y)
-            temp.remove(y)
-            lec[i][j].append(x)
-            lec[i][j].append(y)
-            # print(lec)
-
-    return lec
-
-def dailyTime(classes, wing, day, wing_perWeek):
-    for i in range(noOfLec):
-        lec = active_lec(classes, wing, wing_perWeek)
-        day.append(lec)
+def dailyTime(classes, wing, week, wing_perWeek, day, mathcount, t_timetable):
+    t_list, wing_sub = getListFromWing(wing)
+    wing_perDay = perCounter(wing, wing_sub)
+    lec = assign_lec(classes, wing, wing_perWeek, wing_perDay, t_list, day, mathcount, t_timetable)
+    week.append(lec)
 
 def weektime(wing):
-    day = []
     week = []
     t_list, wing_sub = getListFromWing(wing)
     wing_perWeek = perCounter(wing, wing_sub)
     classes = assign(wing)
-    for i in range(noOfDays):
-        dailyTime(classes, wing, day, wing_perWeek)
-        week.append(day)
-    print(week)
-    
-# sec_classes = assign('02')
-# count = 9
-# for j in sec_classes:
-#     print(count)
-#     for k in range(len(j)):
-#         print(k)
-#         print(j[k])
-#     count += 1
+    bla = 0
+    while True:
+        try:
+            mathcount = []
+            t_timetable = teachertimetable(t_list)
+            for i in range(len(classes)):
+                mathcount.append([])
+                for j in range(noOfSections):
+                    mathcount[i].append(0)
+            for i in range(noOfDays):
+                # print("DAY", i+1)
+                dailyTime(classes, wing, week, wing_perWeek, i, mathcount, t_timetable)
+            break
+        except:
+            wing_perWeek = perCounter(wing, wing_sub)
+            week = []
+            bla += 1
+    print("Timetable has been generated")
+    return week, t_timetable
+table = {}
+week, t_timetable = weektime('02')
+days = ["Mon", "Tues", "Wed", "Thurs", "Fri"]
+for i in range(12):
+    class_sec = str(9 + i//6) + chr(65 + i - 6*(i//6))
+    table[class_sec] = PrettyTable(["", "Lec 1", "Lec 2" , "Lec 3", "Lec 4", "Lec 5", "Lec 6", "Lec 7", "Lec 8"])
+    for day in range(len(week)):
+        day_table = [days[day]] + week[day][i]
+        table[class_sec].add_row(day_table)
 
-weektime('02')
+for i in table:
+    print("                                          ", i)
+    print(table[i])
