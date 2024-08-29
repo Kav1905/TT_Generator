@@ -232,6 +232,7 @@ def weektime(wing):
     t_list, wing_sub = getListFromWing(wing)
     wing_perWeek = perCounter(wing, wing_sub)
     classes = assign(wing)
+    print("Timetable is being generated")
     bla = 0
     while True:
         try:
